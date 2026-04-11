@@ -1,0 +1,165 @@
+{
+  "name": "DiagnosticProSuite Ultimate Edition",
+  "version": "2.0.0",
+  "build_date": "20260410_030603",
+  "total_size": 400827,
+  "components": [
+    {
+      "name": "ISO_STRUCTURE.md",
+      "source_path": "ISO_STRUCTURE.md",
+      "target_path": "CORE/ISO_STRUCTURE.md",
+      "component_type": "core_system",
+      "size": 11676,
+      "checksum": "sha256:f166ec439623012fc7cac4878f1cfd6f79329a2ba2d3f4a0398f79fc44931afc",
+      "required": true,
+      "description": "Core system component: ISO_STRUCTURE.md"
+    },
+    {
+      "name": "PROFESSIONAL_CONTROL_PANEL.html",
+      "source_path": "PROFESSIONAL_CONTROL_PANEL.html",
+      "target_path": "CORE/PROFESSIONAL_CONTROL_PANEL.html",
+      "component_type": "core_system",
+      "size": 41933,
+      "checksum": "sha256:0fabd0b44e4f9c30fab913549bc8653b5adfc87976952d9a34e1573101d7f5e7",
+      "required": true,
+      "description": "Core system component: PROFESSIONAL_CONTROL_PANEL.html"
+    },
+    {
+      "name": "PROGRAMMING_CONFIGURATION_MODULE.py",
+      "source_path": "PROGRAMMING_CONFIGURATION_MODULE.py",
+      "target_path": "CORE/PROGRAMMING_CONFIGURATION_MODULE.py",
+      "component_type": "core_system",
+      "size": 40728,
+      "checksum": "sha256:6e1ffb855b3c4ed19e3dc506cbf54e526f043f24a9ed71f1c856cafef2588f59",
+      "required": true,
+      "description": "Core system component: PROGRAMMING_CONFIGURATION_MODULE.py"
+    },
+    {
+      "name": "AI_CHAT_REALTIME_ENGINE.js",
+      "source_path": "AI_CHAT_REALTIME_ENGINE.js",
+      "target_path": "CORE/AI_CHAT_REALTIME_ENGINE.js",
+      "component_type": "core_system",
+      "size": 28140,
+      "checksum": "sha256:9ff5a8d7cbeb454bfff5b1532f731462d5ba636d5254a4e051539932d3ecf48d",
+      "required": true,
+      "description": "Core system component: AI_CHAT_REALTIME_ENGINE.js"
+    },
+    {
+      "name": "EXTENSION_SYSTEM_FRAMEWORK.py",
+      "source_path": "EXTENSION_SYSTEM_FRAMEWORK.py",
+      "target_path": "CORE/EXTENSION_SYSTEM_FRAMEWORK.py",
+      "component_type": "core_system",
+      "size": 42845,
+      "checksum": "sha256:34d08510f0a1e1d6554c4bf5a009e2c27ad83c9c2e15569508b0fcc5a28c08b2",
+      "required": true,
+      "description": "Core system component: EXTENSION_SYSTEM_FRAMEWORK.py"
+    },
+    {
+      "name": "TESTING_SIMULATION_SUITE.py",
+      "source_path": "TESTING_SIMULATION_SUITE.py",
+      "target_path": "CORE/TESTING_SIMULATION_SUITE.py",
+      "component_type": "core_system",
+      "size": 52851,
+      "checksum": "sha256:b63e95a711f55478f8de375de06ffd9a1b2e7b6f44f709df6d17ac8813ed7042",
+      "required": true,
+      "description": "Core system component: TESTING_SIMULATION_SUITE.py"
+    },
+    {
+      "name": "REPAIR_DIAGNOSTIC_SYSTEM.py",
+      "source_path": "REPAIR_DIAGNOSTIC_SYSTEM.py",
+      "target_path": "CORE/REPAIR_DIAGNOSTIC_SYSTEM.py",
+      "component_type": "core_system",
+      "size": 58473,
+      "checksum": "sha256:5b08b0c31d39e9c37e14dfbb4b97408073507b61345dffe432694aed19956bc6",
+      "required": true,
+      "description": "Core system component: REPAIR_DIAGNOSTIC_SYSTEM.py"
+    },
+    {
+      "name": "AUTO_UPDATE_SYSTEM.py",
+      "source_path": "AUTO_UPDATE_SYSTEM.py",
+      "target_path": "CORE/AUTO_UPDATE_SYSTEM.py",
+      "component_type": "core_system",
+      "size": 59657,
+      "checksum": "sha256:eac6be8357636779126defa906661a3c2ce89488b670fe00e86f5859071c6a56",
+      "required": true,
+      "description": "Core system component: AUTO_UPDATE_SYSTEM.py"
+    },
+    {
+      "name": "SUPPORT_TOOLS_INTEGRATION.py",
+      "source_path": "SUPPORT_TOOLS_INTEGRATION.py",
+      "target_path": "CORE/SUPPORT_TOOLS_INTEGRATION.py",
+      "component_type": "core_system",
+      "size": 48427,
+      "checksum": "sha256:1057bb74ee29ace1a72b52450befd889e3984b7d6eb757d777abcde5204981d4",
+      "required": true,
+      "description": "Core system component: SUPPORT_TOOLS_INTEGRATION.py"
+    },
+    {
+      "name": "todo.md",
+      "source_path": "todo.md",
+      "target_path": "CONFIG/todo.md",
+      "component_type": "configuration",
+      "size": 500,
+      "checksum": "sha256:3c7dcc62b6a63d8c6fd0f0d555dfe773afd666675a673ea5c5e02c98820df08a",
+      "required": false,
+      "description": "Configuration file: todo.md"
+    },
+    {
+      "name": "install.py",
+      "source_path": "ISO_TEMP/install.py",
+      "target_path": "install.py",
+      "component_type": "installer",
+      "size": 7039,
+      "checksum": "sha256:f6c4ccdacab33ba41db0de01c687131e6d51bb8d34aee4a1ea3349711129cb71",
+      "required": true,
+      "description": "Main installation script"
+    },
+    {
+      "name": "install.bat",
+      "source_path": "ISO_TEMP/install.bat",
+      "target_path": "install.bat",
+      "component_type": "installer",
+      "size": 633,
+      "checksum": "sha256:a221dfbc441ef10be45e37be7c253dbff3ef6e35fffa8d01d10112147e3586fc",
+      "required": false,
+      "description": "Windows batch installer"
+    },
+    {
+      "name": "install.sh",
+      "source_path": "ISO_TEMP/install.sh",
+      "target_path": "install.sh",
+      "component_type": "installer",
+      "size": 773,
+      "checksum": "sha256:17e8e7d42ebb7ac081ccc5b75b05800cc950e880aa53c5cd1abb605e41d3c035",
+      "required": false,
+      "description": "Unix shell installer"
+    },
+    {
+      "name": "README.md",
+      "source_path": "ISO_TEMP/README.md",
+      "target_path": "README.md",
+      "component_type": "documentation",
+      "size": 4890,
+      "checksum": "sha256:03cbde1131145d75e1f91477b82951f591f67792eb0603695eb87924160631b0",
+      "required": true,
+      "description": "Main documentation file"
+    },
+    {
+      "name": "LICENSE.txt",
+      "source_path": "ISO_TEMP/LICENSE.txt",
+      "target_path": "LICENSE.txt",
+      "component_type": "documentation",
+      "size": 2262,
+      "checksum": "sha256:200aaea52d73c075972f7b8dbca559c48baffddf8cf51a1e77dd66105bb99f39",
+      "required": true,
+      "description": "Software license"
+    }
+  ],
+  "metadata": {
+    "builder": "ISO Builder & Finalizer",
+    "platform": "cross-platform",
+    "architecture": "universal",
+    "compression": "zip",
+    "checksum_algorithm": "sha256"
+  }
+}

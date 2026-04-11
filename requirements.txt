@@ -1,0 +1,6 @@
+﻿# Core Dependencies
+pyinstaller==6.1.0
+
+# Optional for advanced features
+numpy>=1.24.0
+pandas>=2.0.0

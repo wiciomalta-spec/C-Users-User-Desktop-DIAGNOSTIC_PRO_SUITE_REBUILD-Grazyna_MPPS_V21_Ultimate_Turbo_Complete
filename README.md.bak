@@ -1,0 +1,4 @@
+﻿# Pobierz zawartość schowka, usuń metadane Edge i zapisz README.md
+$txt = Get-Clipboard -Raw
+$clean = $txt -replace "(?s)
+

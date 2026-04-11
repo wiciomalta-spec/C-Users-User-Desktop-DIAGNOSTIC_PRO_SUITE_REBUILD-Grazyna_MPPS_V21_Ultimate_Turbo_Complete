@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Pro Suite - Zaawansowane Wizualizacje</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00f5ff, #ff00ff, #00ff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .visualization-panel {
+            background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visualization-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00f5ff, #ff00ff, #00ff00, #ffaa00);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .panel-status {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #00ff00;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .large-chart {
+            height: 400px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #00f5ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .metric-trend {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .trend-up { color: #00ff00; }
+        .trend-down { color: #ff4444; }
+        .trend-stable { color: #ffaa00; }
+
+        .device-topology {
+            position: relative;
+            height: 400px;
+            background: radial-gradient(circle at center, #1a1a2e, #0f0f0f);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .topology-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid;
+        }
+
+        .node-active {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .node-warning {
+            background: rgba(255, 170, 0, 0.2);
+            border-color: #ffaa00;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+        }
+
+        .node-offline {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .topology-connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+            transform-origin: left center;
+            animation: dataFlow 2s linear infinite;
+        }
+
+        @keyframes dataFlow {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        .protocol-stack-viz {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .protocol-layer {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .layer-application { border-left-color: #ff00ff; }
+        .layer-transport { border-left-color: #00f5ff; }
+        .layer-network { border-left-color: #00ff00; }
+        .layer-physical { border-left-color: #ffaa00; }
+
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .layer-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .layer-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+        }
+
+        .status-standby {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+        }
+
+        .layer-protocols {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .protocol-tag {
+            padding: 0.25rem 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .security-radar {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 1rem auto;
+        }
+
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 2px;
+            margin: 1rem 0;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .heat-level-0 { background: #1a1a1a; }
+        .heat-level-1 { background: #2d4a2d; }
+        .heat-level-2 { background: #4a6b4a; }
+        .heat-level-3 { background: #6b8c6b; }
+        .heat-level-4 { background: #8cad8c; }
+        .heat-level-5 { background: #adcead; }
+
+        .alert-timeline {
+            position: relative;
+            margin: 1rem 0;
+            padding: 1rem 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .timeline-time {
+            width: 80px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin: 0 1rem;
+            position: relative;
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .alert-critical { 
+            border-left-color: #ff0000;
+        }
+        .alert-warning { 
+            border-left-color: #ffaa00;
+        }
+        .alert-info { 
+            border-left-color: #00aaff;
+        }
+
+        .dot-critical { background: #ff0000; }
+        .dot-warning { background: #ffaa00; }
+        .dot-info { background: #00aaff; }
+
+        .performance-gauge {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 1rem auto;
+        }
+
+        .gauge-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff0000 0deg 60deg,
+                #ffaa00 60deg 120deg,
+                #00ff00 120deg 360deg
+            );
+            position: relative;
+        }
+
+        .gauge-inner {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .gauge-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00ff00;
+        }
+
+        .gauge-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .data-flow-viz {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .flow-stream {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+            animation: flowAnimation 3s linear infinite;
+        }
+
+        @keyframes flowAnimation {
+            0% { left: -100px; opacity: 0; }
+            50% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        .controls-panel {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(145deg, #3a3a3a, #4a4a4a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(145deg, #00f5ff, #0080ff);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🎛️ Zaawansowane Wizualizacje</h1>
+        <p>Diagnostic Pro Suite - Analityka w Czasie Rzeczywistym</p>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Real-time Performance Dashboard -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">📊 Wydajność w Czasie Rzeczywistym</h3>
+                <div class="panel-status">AKTYWNY</div>
+            </div>
+            <div class="chart-container large-chart">
+                <canvas id="realTimeChart"></canvas>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="cpu-metric">23%</div>
+                    <div class="metric-label">CPU</div>
+                    <div class="metric-trend trend-stable">↔ Stabilny</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="memory-metric">45%</div>
+                    <div class="metric-label">RAM</div>
+                    <div class="metric-trend trend-up">↗ +2%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="network-metric">120</div>
+                    <div class="metric-label">Mbps</div>
+                    <div class="metric-trend trend-up">↗ +15%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="latency-metric">12ms</div>
+                    <div class="metric-label">Latencja</div>
+                    <div class="metric-trend trend-down">↘ -3ms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Topology Visualization -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🔌 Topologia Urządzeń</h3>
+                <div class="panel-status">12 URZĄDZEŃ</div>
+            </div>
+            <div class="device-topology" id="deviceTopology">
+                <!-- Nodes will be dynamically generated -->
+            </div>
+            <div class="controls-panel">
+                <button class="control-btn active" onclick="toggleView('topology')">Topologia</button>
+                <button class="control-btn" onclick="toggleView('list')">Lista</button>
+                <button class="control-btn" onclick="toggleView('health')">Zdrowie</button>
+            </div>
+        </div>
+
+        <!-- Protocol Stack Visualization -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">📡 Stos Protokołów</h3>
+                <div class="panel-status">WSZYSTKIE AKTYWNE</div>
+            </div>
+            <div class="protocol-stack-viz">
+                <div class="protocol-layer layer-application">
+                    <div class="layer-header">
+                        <div class="layer-name">Warstwa Aplikacji</div>
+                        <div class="layer-status status-active">AKTYWNA</div>
+                    </div>
+                    <div class="layer-protocols">
+                        <span class="protocol-tag">UDS</span>
+                        <span class="protocol-tag">OBD-II</span>
+                        <span class="protocol-tag">KWP2000</span>
+                    </div>
+                </div>
+                <div class="protocol-layer layer-transport">
+                    <div class="layer-header">
+                        <div class="layer-name">Warstwa Transportu</div>
+                        <div class="layer-status status-active">AKTYWNA</div>
+                    </div>
+                    <div class="layer-protocols">
+                        <span class="protocol-tag">ISO-TP</span>
+                        <span class="protocol-tag">CAN-TP</span>
+                    </div>
+                </div>
+                <div class="protocol-layer layer-network">
+                    <div class="layer-header">
+                        <div class="layer-name">Warstwa Sieciowa</div>
+                        <div class="layer-status status-active">AKTYWNA</div>
+                    </div>
+                    <div class="layer-protocols">
+                        <span class="protocol-tag">CAN</span>
+                        <span class="protocol-tag">CAN-FD</span>
+                        <span class="protocol-tag">LIN</span>
+                        <span class="protocol-tag">FlexRay</span>
+                        <span class="protocol-tag">Ethernet</span>
+                    </div>
+                </div>
+                <div class="protocol-layer layer-physical">
+                    <div class="layer-header">
+                        <div class="layer-name">Warstwa Fizyczna</div>
+                        <div class="layer-status status-active">AKTYWNA</div>
+                    </div>
+                    <div class="layer-protocols">
+                        <span class="protocol-tag">USB 3.0</span>
+                        <span class="protocol-tag">USB 2.0</span>
+                        <span class="protocol-tag">RS232</span>
+                        <span class="protocol-tag">Ethernet</span>
+                        <span class="protocol-tag">WiFi</span>
+                        <span class="protocol-tag">Bluetooth</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Radar Chart -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🔒 Radar Bezpieczeństwa</h3>
+                <div class="panel-status">SCORE: 94/100</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="securityRadar"></canvas>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Zagrożenia</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">Szyfrowanie</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3</div>
+                    <div class="metric-label">Sesje</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">99.97%</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Heatmap -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🔥 Mapa Aktywności</h3>
+                <div class="panel-status">OSTATNIE 24H</div>
+            </div>
+            <div class="heatmap-container" id="activityHeatmap">
+                <!-- Heatmap cells will be generated dynamically -->
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.7; margin-top: 1rem;">
+                <span>00:00</span>
+                <span>06:00</span>
+                <span>12:00</span>
+                <span>18:00</span>
+                <span>24:00</span>
+            </div>
+        </div>
+
+        <!-- Alert Timeline -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🚨 Timeline Alertów</h3>
+                <div class="panel-status">7 AKTYWNYCH</div>
+            </div>
+            <div class="alert-timeline">
+                <div class="timeline-item">
+                    <div class="timeline-time">14:23</div>
+                    <div class="timeline-dot dot-info"></div>
+                    <div class="timeline-content alert-info">
+                        <strong>Backup zakończony</strong><br>
+                        Dzienny backup przyrostowy ukończony pomyślnie
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:20</div>
+                    <div class="timeline-dot dot-warning"></div>
+                    <div class="timeline-content alert-warning">
+                        <strong>CAN Analyzer - Wysoki wskaźnik błędów</strong><br>
+                        CAN-Analyzer-003 pokazuje podwyższony wskaźnik błędów (2.3%)
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:18</div>
+                    <div class="timeline-dot dot-warning"></div>
+                    <div class="timeline-content alert-warning">
+                        <strong>Legacy Adapter - Wolna odpowiedź</strong><br>
+                        Czas odpowiedzi przekracza próg (>500ms)
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:15</div>
+                    <div class="timeline-dot dot-info"></div>
+                    <div class="timeline-content alert-info">
+                        <strong>Skan bezpieczeństwa zakończony</strong><br>
+                        Rutynowy skan bezpieczeństwa nie znalazł zagrożeń
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Gauge -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">⚡ Wskaźnik Wydajności</h3>
+                <div class="panel-status">EXCELLENT</div>
+            </div>
+            <div class="performance-gauge">
+                <div class="gauge-bg">
+                    <div class="gauge-inner">
+                        <div class="gauge-value">96</div>
+                        <div class="gauge-label">Performance Score</div>
+                    </div>
+                </div>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">12ms</div>
+                    <div class="metric-label">Czas odpowiedzi</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1,200</div>
+                    <div class="metric-label">Req/min</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.3%</div>
+                    <div class="metric-label">Błędy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">45</div>
+                    <div class="metric-label">Sesje</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Flow Visualization -->
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🌊 Przepływ Danych</h3>
+                <div class="panel-status">1.2 MB/s</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="dataFlowChart"></canvas>
+            </div>
+            <div class="data-flow-viz" id="dataFlowViz">
+                <!-- Flow streams will be generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize all charts and visualizations
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRealTimeChart();
+            initializeSecurityRadar();
+            initializeDataFlowChart();
+            initializeDeviceTopology();
+            initializeActivityHeatmap();
+            initializeDataFlowAnimation();
+            
+            // Start real-time updates
+            setInterval(updateRealTimeData, 2000);
+            setInterval(updateMetrics, 5000);
+        });
+
+        // Real-time performance chart
+        function initializeRealTimeChart() {
+            const ctx = document.getElementById('realTimeChart').getContext('2d');
+            window.realTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'CPU %',
+                        data: [],
+                        borderColor: '#00f5ff',
+                        backgroundColor: 'rgba(0, 245, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'RAM %',
+                        data: [],
+                        borderColor: '#ff00ff',
+                        backgroundColor: 'rgba(255, 0, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Network Mbps',
+                        data: [],
+                        borderColor: '#00ff00',
+                        backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'second',
+                                displayFormats: {
+                                    second: 'HH:mm:ss'
+                                }
+                            },
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    },
+                    animation: {
+                        duration: 0
+                    }
+                }
+            });
+        }
+
+        // Security radar chart
+        function initializeSecurityRadar() {
+            const ctx = document.getElementById('securityRadar').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Szyfrowanie', 'Uwierzytelnianie', 'Autoryzacja', 'Monitoring', 'Compliance', 'Backup'],
+                    datasets: [{
+                        label: 'Security Score',
+                        data: [98, 95, 92, 96, 96, 90],
+                        borderColor: '#00ff00',
+                        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+                        pointBackgroundColor: '#00ff00',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#00ff00'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.2)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                            pointLabels: { color: '#fff' },
+                            ticks: { 
+                                color: '#fff',
+                                backdropColor: 'transparent'
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Data flow chart
+        function initializeDataFlowChart() {
+            const ctx = document.getElementById('dataFlowChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['UDS', 'CAN', 'DoIP', 'OBD-II', 'LIN', 'FlexRay'],
+                    datasets: [{
+                        label: 'Przepustowość (KB/s)',
+                        data: [340, 1200, 800, 150, 45, 200],
+                        backgroundColor: [
+                            'rgba(0, 245, 255, 0.8)',
+                            'rgba(255, 0, 255, 0.8)',
+                            'rgba(0, 255, 0, 0.8)',
+                            'rgba(255, 170, 0, 0.8)',
+                            'rgba(255, 0, 0, 0.8)',
+                            'rgba(0, 170, 255, 0.8)'
+                        ],
+                        borderColor: [
+                            '#00f5ff',
+                            '#ff00ff',
+                            '#00ff00',
+                            '#ffaa00',
+                            '#ff0000',
+                            '#00aaff'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Device topology visualization
+        function initializeDeviceTopology() {
+            const container = document.getElementById('deviceTopology');
+            const devices = [
+                { id: 'central', name: '🧠', status: 'active', x: 50, y: 50 },
+                { id: 'vci1', name: '📱', status: 'active', x: 20, y: 20 },
+                { id: 'obd1', name: '🔌', status: 'active', x: 80, y: 20 },
+                { id: 'can1', name: '📡', status: 'warning', x: 20, y: 80 },
+                { id: 'doip1', name: '🌐', status: 'active', x: 80, y: 80 },
+                { id: 'multi1', name: '🔧', status: 'offline', x: 50, y: 15 },
+                { id: 'scope1', name: '📊', status: 'active', x: 15, y: 50 },
+                { id: 'wireless1', name: '📶', status: 'active', x: 85, y: 50 }
+            ];
+
+            devices.forEach(device => {
+                const node = document.createElement('div');
+                node.className = `topology-node node-${device.status}`;
+                node.style.left = `${device.x}%`;
+                node.style.top = `${device.y}%`;
+                node.innerHTML = device.name;
+                node.title = `${device.id} - ${device.status}`;
+                container.appendChild(node);
+
+                // Add connections to central node
+                if (device.id !== 'central') {
+                    const connection = document.createElement('div');
+                    connection.className = 'topology-connection';
+                    const centralX = 50;
+                    const centralY = 50;
+                    const length = Math.sqrt(Math.pow(device.x - centralX, 2) + Math.pow(device.y - centralY, 2));
+                    const angle = Math.atan2(device.y - centralY, device.x - centralX) * 180 / Math.PI;
+                    
+                    connection.style.left = `${centralX}%`;
+                    connection.style.top = `${centralY}%`;
+                    connection.style.width = `${length}%`;
+                    connection.style.transform = `rotate(${angle}deg)`;
+                    container.appendChild(connection);
+                }
+            });
+        }
+
+        // Activity heatmap
+        function initializeActivityHeatmap() {
+            const container = document.getElementById('activityHeatmap');
+            for (let i = 0; i < 24; i++) {
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell heat-level-${Math.floor(Math.random() * 6)}`;
+                cell.title = `${i}:00 - Activity Level`;
+                container.appendChild(cell);
+            }
+        }
+
+        // Data flow animation
+        function initializeDataFlowAnimation() {
+            const container = document.getElementById('dataFlowViz');
+            setInterval(() => {
+                const stream = document.createElement('div');
+                stream.className = 'flow-stream';
+                stream.style.top = `${Math.random() * 180 + 10}px`;
+                stream.style.width = '100px';
+                container.appendChild(stream);
+
+                setTimeout(() => {
+                    if (container.contains(stream)) {
+                        container.removeChild(stream);
+                    }
+                }, 3000);
+            }, 500);
+        }
+
+        // Real-time data updates
+        function updateRealTimeData() {
+            const now = new Date();
+            const cpu = Math.floor(Math.random() * 20) + 15;
+            const memory = Math.floor(Math.random() * 20) + 35;
+            const network = Math.floor(Math.random() * 50) + 100;
+
+            if (window.realTimeChart) {
+                const chart = window.realTimeChart;
+                
+                // Add new data point
+                chart.data.labels.push(now);
+                chart.data.datasets[0].data.push(cpu);
+                chart.data.datasets[1].data.push(memory);
+                chart.data.datasets[2].data.push(network);
+
+                // Keep only last 20 points
+                if (chart.data.labels.length > 20) {
+                    chart.data.labels.shift();
+                    chart.data.datasets.forEach(dataset => dataset.data.shift());
+                }
+
+                chart.update('none');
+            }
+        }
+
+        // Update metrics
+        function updateMetrics() {
+            document.getElementById('cpu-metric').textContent = (Math.floor(Math.random() * 20) + 15) + '%';
+            document.getElementById('memory-metric').textContent = (Math.floor(Math.random() * 20) + 35) + '%';
+            document.getElementById('network-metric').textContent = Math.floor(Math.random() * 50) + 100;
+            document.getElementById('latency-metric').textContent = (Math.floor(Math.random() * 10) + 8) + 'ms';
+        }
+
+        // Toggle view function
+        function toggleView(view) {
+            document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Here you would implement different view modes
+            console.log(`Switching to ${view} view`);
+        }
+
+        console.log('🎛️ Zaawansowane Wizualizacje załadowane!');
+        console.log('📊 Wszystkie dashboardy aktywne!');
+    </script>
+</body>
+</html>

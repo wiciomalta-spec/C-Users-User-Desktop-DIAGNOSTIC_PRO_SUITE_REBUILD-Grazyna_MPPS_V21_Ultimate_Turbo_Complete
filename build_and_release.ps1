@@ -1,0 +1,273 @@
+﻿Set-Location "C:\Users\User\Desktop\DIAGNOSTIC_PRO_SUITE_REBUILD\Grazyna_MPPS_V21_Ultimate_Turbo_Complete"
+
+$script = @'
+# build_and_release.ps1
+# BUILDER PRO â€“ FULL: UPX + USB + RELEASE + LOG + AUTO WERSJONOWANIE + BACKUP + GIT RELEASE
+
+$ProjectRoot = "C:\Users\User\Desktop\DIAGNOSTIC_PRO_SUITE_REBUILD\Grazyna_MPPS_V21_Ultimate_Turbo_Complete"
+Set-Location $ProjectRoot
+
+$MainScript  = Join-Path $ProjectRoot "grazyna_max_pro.py"
+$DistDir     = Join-Path $ProjectRoot "dist"
+$BuildDir    = Join-Path $ProjectRoot "build"
+$ReleaseDir  = Join-Path $ProjectRoot "RELEASE"
+$BackupsDir  = Join-Path $ProjectRoot "BACKUPS"
+$LogFile     = Join-Path $ProjectRoot "build_log.txt"
+$IconPath    = Join-Path $ProjectRoot "grazyna.ico"
+$VersionFile = Join-Path $ProjectRoot "VERSION.txt"
+$Changelog   = Join-Path $ProjectRoot "CHANGELOG.md"
+
+$UseUpx = $true
+$UpxDir = "C:\upx"
+
+$GitRemote = "origin"
+$GitHubRepo = ""
+$CreateTag = $true
+$PushTag = $true
+$ReleaseDraft = $false
+$ReleasePrerelease = $false
+
+$ManualVersion = ""
+
+function Get-VersionStringFromGit {
+    try {
+        $tag = git describe --tags --abbrev=0 2>$null
+        if ($LASTEXITCODE -eq 0 -and $tag) { return $tag.Trim() }
+        $hash = git rev-parse --short HEAD 2>$null
+        if ($LASTEXITCODE -eq 0 -and $hash) { return $hash.Trim() }
+        return $null
+    } catch { return $null }
+}
+
+function Get-ChangelogFromGit {
+    param($lines = 50)
+    try {
+        $log = git --no-pager log -n $lines --pretty=format:"%h %ad %s" --date=short 2>$null
+        if ($LASTEXITCODE -eq 0 -and $log) { return $log }
+        return $null
+    } catch { return $null }
+}
+
+"==> START BUILD AND RELEASE $(Get-Date)" | Out-File $LogFile -Encoding UTF8
+
+Write-Host "==> Wykrywanie pyfiglet fonts..."
+$PyFigletPath = python -c "import pyfiglet, os; print(os.path.dirname(pyfiglet.__file__))"
+$PyFigletPath = $PyFigletPath.Trim()
+$FontsPath    = Join-Path $PyFigletPath "fonts"
+Write-Host "   âś” Fonts: $FontsPath"
+"pyfiglet fonts: $FontsPath" | Out-File $LogFile -Append
+
+Write-Host "==> Szukanie libusb-1.0.dll..."
+$LibUsb = Get-ChildItem -Path $ProjectRoot -Filter "libusb-1.0.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $LibUsb) { $LibUsb = Get-ChildItem -Path "C:\" -Filter "libusb-1.0.dll" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 }
+
+if ($LibUsb) {
+    Write-Host "   âś” Znaleziono libusb: $($LibUsb.FullName)"
+    "libusb: $($LibUsb.FullName)" | Out-File $LogFile -Append
+} else {
+    Write-Host "   âť— libusb-1.0.dll nie znaleziono. USB moĹĽe nie dziaĹ‚aÄ‡ w EXE."
+    "libusb: NOT FOUND" | Out-File $LogFile -Append
+}
+
+Write-Host "==> Czyszczenie starych buildĂłw..."
+Remove-Item $DistDir  -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $BuildDir -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $ReleaseDir -Force | Out-Null
+New-Item -ItemType Directory -Path $BackupsDir -Force | Out-Null
+
+$GitVersion = $null
+$GitChangelog = $null
+if (Test-Path (Join-Path $ProjectRoot ".git")) {
+    Write-Host "==> Repozytorium Git wykryte. Pobieram wersjÄ™ i changelog..."
+    $GitVersion = Get-VersionStringFromGit
+    $GitChangelog = Get-ChangelogFromGit -lines 50
+    if ($GitVersion) { Write-Host "   âś” Git version: $GitVersion"; "git version: $GitVersion" | Out-File $LogFile -Append }
+    else { Write-Host "   âť— Nie udaĹ‚o siÄ™ pobraÄ‡ wersji z Git"; "git version: NOT FOUND" | Out-File $LogFile -Append }
+} else {
+    Write-Host "==> Brak repozytorium .git w katalogu projektu."
+    "git: no repo" | Out-File $LogFile -Append
+}
+
+if ($ManualVersion -and $ManualVersion.Trim() -ne "") { $VersionString = $ManualVersion.Trim() }
+elseif ($GitVersion) { $VersionString = $GitVersion } else { $VersionString = Get-Date -Format "yyyyMMdd_HHmmss" }
+"Version: $VersionString" | Out-File $LogFile -Append
+Write-Host "==> Wersjonowanie: $VersionString"
+
+$VersionContent = "GRAZYNA_MAX_PRO version $VersionString`nBuilt: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+$VersionContent | Out-File $VersionFile -Encoding UTF8
+"VERSION.txt written: $VersionFile" | Out-File $LogFile -Append
+
+if ($GitChangelog) {
+    $ChangelogHeader = "# CHANGELOG`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`n"
+    $ChangelogHeader + $GitChangelog | Out-File $Changelog -Encoding UTF8
+    "CHANGELOG.md written from git log: $Changelog" | Out-File $LogFile -Append
+} else {
+    "# CHANGELOG`n`nNo git changelog available." | Out-File $Changelog -Encoding UTF8
+    "CHANGELOG.md: no git log" | Out-File $LogFile -Append
+}
+
+$ExeBaseName = "GRAZYNA_MAX_PRO"
+$ExeFileName = "$ExeBaseName`_v$VersionString.exe"
+$ExeReleasePath = Join-Path $ReleaseDir $ExeFileName
+
+Write-Host "==> Backup istniejÄ…cych plikĂłw w RELEASE..."
+$ExistingExe = Get-ChildItem -Path $ReleaseDir -Filter "$ExeBaseName*.exe" -File -ErrorAction SilentlyContinue
+if ($ExistingExe) {
+    $BackupSub = Join-Path $BackupsDir (Get-Date -Format "yyyyMMdd_HHmmss")
+    New-Item -ItemType Directory -Path $BackupSub -Force | Out-Null
+    foreach ($f in $ExistingExe) {
+        Copy-Item $f.FullName $BackupSub -Force
+        "Backed up: $($f.Name) -> $BackupSub" | Out-File $LogFile -Append
+    }
+    Write-Host "   âś” Backup wykonany do: $BackupSub"
+} else {
+    Write-Host "   âś” Brak istniejÄ…cych EXE do backupu."
+}
+
+Write-Host "==> Przygotowanie argumentĂłw PyInstaller..."
+$PyInstallerArgs = @(
+    "--onefile"
+    "--noconsole"
+    "--clean"
+    "--name=$ExeBaseName"
+    "--add-data=$FontsPath;pyfiglet/fonts"
+)
+
+if ($UseUpx -and (Test-Path $UpxDir)) {
+    $PyInstallerArgs += "--upx-dir=$UpxDir"
+    "UPX enabled, dir: $UpxDir" | Out-File $LogFile -Append
+} elseif ($UseUpx) {
+    Write-Host "   âť— UPX w $UpxDir nie znaleziono. UPX zostanie pominiÄ™ty."
+    "UPX NOT FOUND: $UpxDir" | Out-File $LogFile -Append
+}
+
+if ($LibUsb) { $PyInstallerArgs += "--add-binary=$($LibUsb.FullName);." }
+if (Test-Path $IconPath) { $PyInstallerArgs += "--icon=$IconPath"; "Icon: $IconPath" | Out-File $LogFile -Append }
+
+$PyInstallerArgs += "`"$MainScript`""
+"pyinstaller args: $($PyInstallerArgs -join ' ')" | Out-File $LogFile -Append
+
+Write-Host "==> Uruchamiam PyInstaller (to moĹĽe chwilÄ™ potrwaÄ‡)..."
+pyinstaller $PyInstallerArgs *>> $LogFile
+
+Write-Host "==> Przenoszenie i wersjonowanie EXE..."
+$BuiltExePath = Join-Path $DistDir "$ExeBaseName.exe"
+if (Test-Path $BuiltExePath) {
+    if (Test-Path $ExeReleasePath) { Remove-Item $ExeReleasePath -Force -ErrorAction SilentlyContinue }
+    Copy-Item $BuiltExePath $ExeReleasePath -Force
+    Write-Host "   âś” EXE zapisano jako: $ExeReleasePath"
+    "EXE saved: $ExeReleasePath" | Out-File $LogFile -Append
+} else {
+    Write-Host "   âť— EXE nie znaleziono w dist â€“ sprawdĹş log: $LogFile"
+    "EXE NOT FOUND in dist" | Out-File $LogFile -Append
+}
+
+# TEST USB (PyUSB) â€” zapis do pliku tymczasowego i uruchomienie
+$usbTestFile = Join-Path $ProjectRoot "usb_test_temp.py"
+@'
+import sys
+try:
+    import usb.core
+    devs = list(usb.core.find(find_all=True))
+    print("USB_DEVICES_FOUND=%d" % len(devs))
+except Exception as e:
+    print("USB_TEST_ERROR:", e)
+    sys.exit(1)
+'@ | Set-Content -LiteralPath $usbTestFile -Encoding UTF8
+
+$UsbTestResult = & python $usbTestFile 2>&1
+Remove-Item $usbTestFile -Force -ErrorAction SilentlyContinue
+$UsbTestResult | Tee-Object -Variable UsbTestOut | Out-File $LogFile -Append
+Write-Host $UsbTestOut
+
+Write-Host "==> Przygotowanie GitHub release: v$VersionString"
+$ghPath = (Get-Command gh -ErrorAction SilentlyContinue).Path
+if (-not $ghPath) {
+    Write-Host "   âť— gh CLI nie znaleziono. Zainstaluj GitHub CLI i zaloguj siÄ™ (gh auth login)."
+    "$((Get-Date).ToString()) - gh CLI NOT FOUND" | Out-File $LogFile -Append
+} else {
+    if ($CreateTag) {
+        git fetch --tags *>> $LogFile
+        $tagExists = git tag --list "v$VersionString"
+        if (-not $tagExists) {
+            Write-Host "   âś” TworzÄ™ tag: v$VersionString"
+            git tag -a "v$VersionString" -m "Release v$VersionString" *>> $LogFile
+            if ($PushTag) {
+                Write-Host "   âś” Push tag do $GitRemote"
+                git push $GitRemote "v$VersionString" *>> $LogFile
+            }
+        } else {
+            Write-Host "   âś” Tag juĹĽ istnieje: v$VersionString"
+        }
+    }
+
+    $ReleaseBody = ""
+    if (Test-Path $Changelog) {
+        $ReleaseBody = Get-Content $Changelog -Raw
+        if ($ReleaseBody.Length -gt 2000) { $ReleaseBody = $ReleaseBody.Substring(0,2000) + "`n... (truncated)" }
+    } else { $ReleaseBody = "Release v$VersionString" }
+
+    $ExeToUpload = Get-ChildItem -Path $ReleaseDir -Filter "$ExeBaseName*_v*$VersionString*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $ExeToUpload) {
+        $ExeToUpload = Get-ChildItem -Path $ReleaseDir -Filter "$ExeBaseName*.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    }
+
+    if ($ExeToUpload) {
+        Write-Host "   âś” Plik do uploadu: $($ExeToUpload.FullName)"
+        "$((Get-Date).ToString()) - Preparing GitHub release v$VersionString, asset: $($ExeToUpload.Name)" | Out-File $LogFile -Append
+
+        $ghCreateArgs = @("release","create","v$VersionString",$ExeToUpload.FullName,"--title","v$VersionString")
+        if (Test-Path $Changelog) { $ghCreateArgs += @("--notes-file",$Changelog) }
+        if ($GitHubRepo -and $GitHubRepo.Trim() -ne "") { $ghCreateArgs += @("--repo",$GitHubRepo) }
+        if ($ReleaseDraft) { $ghCreateArgs += "--draft" }
+        if ($ReleasePrerelease) { $ghCreateArgs += "--prerelease" }
+
+        & gh release view "v$VersionString" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "   âś” TworzÄ™ release na GitHub: v$VersionString"
+            & gh @ghCreateArgs *>> $LogFile
+            $ghExit = $LASTEXITCODE
+            if ($ghExit -eq 0) {
+                Write-Host "   âś” Release utworzony i asset przesĹ‚any."
+                "$((Get-Date).ToString()) - Release created: v$VersionString" | Out-File $LogFile -Append
+            } else {
+                Write-Host "   âť— BĹ‚Ä…d przy tworzeniu release. SprawdĹş log."
+                "$((Get-Date).ToString()) - Release create FAILED (exit $ghExit)" | Out-File $LogFile -Append
+            }
+        } else {
+            Write-Host "   âś” Release juĹĽ istnieje. DodajÄ™ asset."
+            $ghUploadArgs = @("release","upload","v$VersionString",$ExeToUpload.FullName,"--clobber")
+            if ($GitHubRepo -and $GitHubRepo.Trim() -ne "") { $ghUploadArgs += @("--repo",$GitHubRepo) }
+            & gh @ghUploadArgs *>> $LogFile
+            $ghExit = $LASTEXITCODE
+            if ($ghExit -eq 0) {
+                Write-Host "   âś” Asset przesĹ‚any do istniejÄ…cego release."
+                "$((Get-Date).ToString()) - Asset uploaded to existing release: v$VersionString" | Out-File $LogFile -Append
+            } else {
+                Write-Host "   âť— BĹ‚Ä…d przy uploadzie assetu. SprawdĹş log."
+                "$((Get-Date).ToString()) - Asset upload FAILED (exit $ghExit)" | Out-File $LogFile -Append
+            }
+        }
+    } else {
+        Write-Host "   âť— Nie znaleziono pliku EXE do uploadu w $ReleaseDir"
+        "$((Get-Date).ToString()) - No EXE found to upload" | Out-File $LogFile -Append
+    }
+}
+
+Write-Host ""
+Write-Host "============================================"
+Write-Host "  BUILD AND RELEASE ZAKOĹCZONY"
+Write-Host "  EXE: $ExeReleasePath"
+Write-Host "  BACKUPS: $BackupsDir"
+Write-Host "  VERSION: $VersionFile"
+Write-Host "  CHANGELOG: $Changelog"
+Write-Host "  LOG: $LogFile"
+Write-Host "============================================"
+
+"==> END BUILD AND RELEASE $(Get-Date)" | Out-File $LogFile -Append
+'@
+
+$script | Set-Content .\build_and_release.ps1 -Encoding UTF8
+Write-Host "Plik build_and_release.ps1 nadpisany poprawionÄ… wersjÄ…."
+
+

@@ -1,0 +1,36 @@
+{
+  "installer": {
+    "name": "Diagnostic_Pro_Suite_Ultimate_Installer",
+    "version": "2.0.0",
+    "build_date": "2026-04-10T09:16:59.860098",
+    "target_directory": "C:\\Users\\User\\Desktop\\Grazyna_MPPS_V21_Ultimate_Turbo_Complete",
+    "description": "Kompletny instalator systemu diagnostycznego z AI",
+    "auto_install": true,
+    "create_shortcuts": true
+  },
+  "system_features": [
+    "Profesjonalny panel sterowania z wizualizacjami",
+    "System optymalizacji pamięci AI z predykcyjnym ładowaniem",
+    "Chat AI w czasie rzeczywistym z WebSocket",
+    "Framework rozszerzeń z sandboxingiem bezpieczeństwa",
+    "Kompleksowy system testów i symulacji",
+    "Inteligentny system napraw i diagnostyki",
+    "Automatyczne aktualizacje z możliwością rollback",
+    "Integracja narzędzi diagnostycznych OBD-II/CAN"
+  ],
+  "installation": {
+    "method": "Automatic extraction and setup",
+    "requirements": "Python 3.8+, 512MB RAM, 100MB storage",
+    "platforms": [
+      "Windows 10/11",
+      "Linux",
+      "macOS"
+    ],
+    "startup_methods": [
+      "START_DIAGNOSTIC_SUITE.bat",
+      "START_DIAGNOSTIC_SUITE.ps1",
+      "Desktop shortcut",
+      "Web access: http://localhost:8080"
+    ]
+  }
+}
