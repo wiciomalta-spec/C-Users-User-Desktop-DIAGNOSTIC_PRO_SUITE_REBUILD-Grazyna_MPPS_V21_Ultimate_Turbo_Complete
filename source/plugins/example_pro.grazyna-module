@@ -1,0 +1,5 @@
+﻿name = 'ExamplePRO'
+version = '1.0.0'
+
+def run(context):
+    print('[PLUGIN-PRO] ExamplePRO plugin got context:', context)

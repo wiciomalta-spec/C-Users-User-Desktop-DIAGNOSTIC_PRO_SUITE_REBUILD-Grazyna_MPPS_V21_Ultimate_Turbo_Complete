@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>GRAŻYNA — Cyberpunk Dashboard</title>
+  <title>GRAŻYNA DIAGNOSTIC SUITE — ULTIMATE COCKPIT</title>
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
@@ -10,15 +10,21 @@
     <div class="ring"></div>
     <div class="ring"></div>
     <div class="ring"></div>
-    <div id="loader-text">BOOTING GRAŻYNA CORE...</div>
+    <div id="loader-text">BOOTING GRAŻYNA ULTIMATE...</div>
   </div>
   <div id="crt" class="hidden">
     <div id="scanline"></div>
     <div id="frame">
-      <h1>GRAŻYNA DIAGNOSTIC SUITE</h1>
-      <h2>MAX MODE • Deep Scanner • Quantum Harmonizer</h2>
-      <canvas id="liveChart"></canvas>
-      <div id="log"></div>
+      <h1>GRAŻYNA DIAGNOSTIC SUITE — ULTIMATE</h1>
+      <h2>MAX MODE • Deep Scanner PRO • Quantum Harmonizer PRO • AI Engine PRO</h2>
+      <div id="grid">
+        <canvas id="panel-max"></canvas>
+        <canvas id="panel-deep"></canvas>
+        <canvas id="panel-quantum"></canvas>
+        <div id="panel-log">
+          <div id="log"></div>
+        </div>
+      </div>
     </div>
   </div>
   <script src="dashboard.js"></script>
