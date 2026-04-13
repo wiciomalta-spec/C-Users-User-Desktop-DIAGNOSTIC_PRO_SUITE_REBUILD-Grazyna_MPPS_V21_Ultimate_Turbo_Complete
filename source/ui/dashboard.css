@@ -1,4 +1,76 @@
-﻿body { margin:0; background:#050509; color:#00ffea; font-family:Consolas; }
-#frame { border:2px solid #00ffea; box-shadow:0 0 25px #00ffea; padding:20px; }
-#scanline { position:fixed; top:0; height:2px; background:#00ffea; animation:scan 2s linear infinite; }
-@keyframes scan { 0%{top:0;} 100%{top:100%;} }
+﻿body {
+  margin:0;
+  background: radial-gradient(circle at top, #050509 0, #000000 60%);
+  color:#00ffea;
+  font-family:Consolas, monospace;
+  overflow:hidden;
+}
+
+#crt {
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#frame {
+  border:2px solid #00ffea;
+  box-shadow:0 0 25px #00ffea, 0 0 60px #ff00ff;
+  padding:20px;
+  width:80vw;
+  height:80vh;
+  background:rgba(5,5,15,0.9);
+  position:relative;
+  overflow:hidden;
+  animation:glow 3s ease-in-out infinite alternate;
+}
+
+h1 {
+  margin:0;
+  font-size:28px;
+  text-shadow:0 0 10px #ff00ff, 0 0 20px #00ffea;
+}
+
+h2 {
+  margin-top:5px;
+  font-size:14px;
+  color:#ff00ff;
+}
+
+#liveChart {
+  width:100%;
+  height:50%;
+  background:#050510;
+  border:1px solid #00ffea;
+  margin-top:15px;
+}
+
+#log {
+  margin-top:10px;
+  height:25%;
+  overflow-y:auto;
+  font-size:12px;
+  border-top:1px solid #00ffea;
+  padding-top:5px;
+}
+
+#scanline {
+  position:fixed;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg, transparent, #00ffea, transparent);
+  animation:scan 2s linear infinite;
+  opacity:0.6;
+}
+
+@keyframes scan {
+  0% { top:0; }
+  100% { top:100%; }
+}
+
+@keyframes glow {
+  0% { box-shadow:0 0 20px #00ffea, 0 0 40px #ff00ff; }
+  100% { box-shadow:0 0 40px #00ffea, 0 0 80px #ff00ff; }
+}

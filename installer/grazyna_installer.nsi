@@ -1,0 +1,14 @@
+﻿!define APP_NAME "GRAZYNA_DIAGNOSTIC_SUITE"
+!define APP_EXE  "GRAZYNA_DIAGNOSTIC_SUITE.exe"
+
+OutFile "GRAZYNA_DIAGNOSTIC_SUITE_Installer.exe"
+InstallDir $PROGRAMFILES\GRAZYNA_DIAGNOSTIC_SUITE
+
+Page directory
+Page instfiles
+
+Section "Install"
+  SetOutPath $INSTDIR
+  File "..\release\GRAZYNA_DIAGNOSTIC_SUITE.exe"
+  CreateShortCut $DESKTOP\GRAZYNA_DIAGNOSTIC_SUITE.lnk $INSTDIR\${APP_EXE}
+SectionEnd
